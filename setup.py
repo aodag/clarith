@@ -1,4 +1,6 @@
 from setuptools import setup, find_packages
+import os
+
 
 requires = [
     "pyramid",
@@ -39,6 +41,8 @@ points = {
     ]
 }
 
+here = os.path.dirname(__file__)
+readme = open(os.path.join(here, 'README.rst')).read()
 
 setup(
     name='clarith',
@@ -48,6 +52,7 @@ setup(
     author='Atsushi Odagiri',
     author_email='aodagx@gmail.com',
     description='clarith is basic blog app',
+    long_description=readme,
     packages=find_packages("src"),
     package_dir={"": "src"},
     install_requires=requires,
