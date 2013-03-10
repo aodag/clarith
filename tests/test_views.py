@@ -1,6 +1,16 @@
 import pytest
 from pyramid import testing
 
+@pytest.fixture
+def config(request):
+    config = testing.setUp()
+
+    def fin():
+        testing.tearDown()
+    request.addfinalizer(fin)
+
+    return config
+
 
 class TestIndex(object):
     @pytest.fixture
@@ -29,16 +39,6 @@ class TestAddEntry(object):
     def target(self):
         from clarith.blog.views import AddEntry
         return AddEntry
-
-    @pytest.fixture
-    def config(self, request):
-        config = testing.setUp()
-
-        def fin():
-            testing.tearDown()
-        request.addfinalizer(fin)
-
-        return config
 
     def test_it(self, target, config):
         from datetime import date
@@ -71,3 +71,66 @@ class TestAddEntry(object):
         request.context = context
         result = target(context, request)()
         assert 'fs' in result
+
+
+class TestListEntries(object):
+
+    @pytest.fixture
+    def target(self):
+        from clarith.blog.views import list_entries
+        return list_entries
+
+    @pytest.fixture
+    def dummy_entries100(self):
+        entries = [testing.DummyModel()
+                   for i in range(100)]
+        return entries
+
+    def test_first_page(self, config, target, dummy_entries100):
+        config.add_route('entries', 'testing/route/entries')
+        request = testing.DummyRequest(
+            matched_route=testing.DummyModel(name='entries'),
+        )
+        entries = dummy_entries100
+        context = testing.DummyResource(
+            request=request,
+            blog=testing.DummyModel(
+                entries=entries,
+                entries_count=100,
+            ),
+        )
+        request.context = context
+
+        result = target(context, request)
+
+        assert result == dict(entries=entries[:20],
+                              pager='1 '
+                                    '<a href="http://example.com/testing/route/entries?page=2">2</a> '
+                                    '<a href="http://example.com/testing/route/entries?page=3">3</a> '
+                                    '.. '
+                                    '<a href="http://example.com/testing/route/entries?page=5">5</a>')
+
+    def test_last_page(self, config, target, dummy_entries100):
+        config.add_route('entries', 'testing/route/entries')
+        request = testing.DummyRequest(
+            matched_route=testing.DummyModel(name='entries'),
+            GET=dict(page="5"),
+            )
+        entries = dummy_entries100
+        context = testing.DummyResource(
+            request=request,
+            blog=testing.DummyModel(
+                entries=entries,
+                entries_count=100,
+            ),
+        )
+        request.context = context
+
+        result = target(context, request)
+        assert result['entries'] == entries[-20:]
+        assert result == dict(entries=entries[-20:],
+                              pager='<a href="http://example.com/testing/route/entries?page=1">1</a> '
+                                    '.. '
+                                    '<a href="http://example.com/testing/route/entries?page=3">3</a> '
+                                    '<a href="http://example.com/testing/route/entries?page=4">4</a> '
+                                    '5')
