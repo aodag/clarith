@@ -51,9 +51,11 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     install_requires=requires,
+    include_package_data=True,
     tests_require=tests_require,
     entry_points=points,
     extras_require={
+      "testing": requires+tests_require,
       "develop": ["alembic", "pyramid_debugtoolbar"],
     },
 )
