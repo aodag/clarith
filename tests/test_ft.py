@@ -28,7 +28,8 @@ def app(request):
     entries = [models.Entry(blog=default_blog,
                             slug=u'entry-{0}'.format(i),
                             title=u'testing entry {0}'.format(i),
-                            date=base_date+timedelta(days=i))
+                            date=base_date+timedelta(days=i),
+                            description=u'this is testing entry{0}'.format(i))
                for i in range(100)]
     DBSession.add(default_blog)
     DBSession.flush()
@@ -64,4 +65,4 @@ def test_add_entry(app):
     assert response.location == 'http://localhost/entries/testing-entry'
     response = app.get(response.location)
     assert 'testing entry' in response
-    assert '03/21/2013' in response.body
+    assert 'this is description of testing entry' in response.body
