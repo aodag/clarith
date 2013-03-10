@@ -16,6 +16,8 @@ requires = [
     "cliff",
     "js.tinymce",
     "js.jquery",
+    "unidecode",
+    "rebecca.view",
 ]
 
 tests_require = [

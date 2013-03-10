@@ -1,21 +1,21 @@
+from pyramid.decorator import reify
 from formalchemy import FieldSet
-from clarith.sqla import DBSession
+from rebecca.view import BasicView
 
 __author__ = 'aodag'
 
 
-class FormView(object):
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
+class FormView(BasicView):
 
+    @reify
     def fieldset(self):
-        fs = FieldSet(self.model, data=self.request.POST, session=DBSession)
-        self.configure(fs)
+        fs = FieldSet(self.model, data=self.request.POST, 
+                      session=self.db_session)
         return fs
 
     def __call__(self):
-        fs = self.fieldset()
+        fs = self.fieldset
+        self.configure(fs)
         if self.request.POST and fs.validate():
             values = fs.to_dict(with_prefix=False)
             result = self.validated(values)
@@ -33,3 +33,14 @@ class FormView(object):
 
     def template_values(self, values):
         pass
+
+
+class EditFormView(FormView):
+    def load_model(self):
+        pass
+
+    @reify
+    def fieldset(self):
+        model = self.load_model()
+        fs = FieldSet(model, data=self.request.POST)
+        return fs

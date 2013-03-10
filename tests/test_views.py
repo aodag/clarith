@@ -64,7 +64,6 @@ class TestAddEntry(object):
         assert result.location == 'http://example.com/testing-entry-route/testing-entry'
 
     def test_get(self, target, config):
-        config.add_route('entry', 'testing-entry-route/{slug}')
         request = testing.DummyRequest(POST={})
 
         context = testing.DummyResource(request=request, blog=testing.DummyModel())
@@ -73,6 +72,51 @@ class TestAddEntry(object):
         assert 'fs' in result
 
 
+class TestEditEntry(object):
+
+    @pytest.fixture
+    def target(self):
+        from clarith.blog.views import EditEntry
+        return EditEntry
+
+    def test_get(self, target):
+        from clarith.blog.models import Entry
+        request = testing.DummyRequest(
+            )
+        context = testing.DummyResource(
+            entry=Entry(),
+            blog=testing.DummyModel(),
+            )
+
+        view = target(context, request)
+        result = view()
+
+        assert result['fs'].model == context.entry
+
+    def test_post(self, target, config):
+        config.add_route('entry', 'testing-entry-route/{slug}')
+        from clarith.blog.models import Entry
+        request = testing.DummyRequest(
+            POST={
+                "Entry--title": u"testing entry",
+                "Entry--date__year": u"2013",
+                "Entry--date__month": u"3",
+                "Entry--date__day": u"31",
+                "Entry--slug": u"",
+                "Entry--description": u"this is testing entry",
+            })
+        context = testing.DummyResource(
+            entry=Entry(slug='this-is-testing', 
+                        title=u'before sync'),
+            blog=testing.DummyModel(),
+            )
+
+        view = target(context, request)
+        result = view()
+
+        assert context.entry.title == u"testing entry"
+        assert result.location == 'http://example.com/testing-entry-route/this-is-testing'
+        
 class TestListEntries(object):
 
     @pytest.fixture

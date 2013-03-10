@@ -3,8 +3,8 @@ import paginate
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 from webhelpers2.text import urlify
-
-from clarith.fa.views import FormView
+from clarith.sqla import DBSession
+from clarith.fa.views import FormView, EditFormView
 from .models import Entry
 
 logger = logging.getLogger(__name__)
@@ -19,16 +19,43 @@ def index(context, request):
 @view_config(route_name='add_entry', renderer='add_entry.mako')
 class AddEntry(FormView):
     model = Entry
+    db_session = DBSession
 
     def configure(self, fs):
         fs.configure(exclude=[fs.created, fs.updated, fs.blog])
 
     def validated(self, values):
         blog = self.context.blog
+
         if not values.get('slug'):
             values['slug'] = urlify(values['title'])
+
         entry = blog.add_entry(**values)
-        return HTTPFound(self.request.route_url('entry', slug=entry.slug))
+
+        return self.redirect_route('entry', slug=entry.slug)
+
+
+    def template_values(self, values):
+        blog = self.context.blog
+        values.update(blog=blog)
+
+@view_config(route_name='edit_entry', renderer='edit_entry.mako')
+class EditEntry(EditFormView):
+    model = Entry
+
+    def load_model(self):
+        return self.context.entry
+
+    def configure(self, fs):
+        fs.configure(exclude=[fs.created, fs.updated, fs.blog, fs.slug])
+
+    def validated(self, values):
+        blog = self.context.blog
+        self.fieldset.sync()
+        entry = self.fieldset.model
+
+        return self.redirect_route('entry', slug=entry.slug)
+
 
     def template_values(self, values):
         blog = self.context.blog

@@ -11,6 +11,7 @@ def includeme(config):
     config.add_route('top', '/')
     config.add_route('add_entry', '/add_entry')
     config.add_route('entries', '/entries')
+    config.add_route('edit_entry', '/entries/{slug}/edit')
     config.add_route('entry', '/entries/{slug}')
     config.scan()
 
